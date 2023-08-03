@@ -128,27 +128,22 @@ class RPC(Controller):
         result = dispatch_rpc(service, method, params)
         return xmlrpc.client.dumps((result,), methodresponse=1, allow_none=False)
 
-    @route("/xmlrpc/<service>", auth="none", methods=["POST"], csrf=False, save_session=False)
-    def xmlrpc_1(self, service):
-        """XML-RPC service that returns faultCode as strings.
+   @route("/xmlrpc/<service>", auth="none", methods=["POST"], csrf=False, save_session=False)
+def xmlrpc_1(self, service):
+    try:
+        response = self._xmlrpc(service)
+    except Exception as error:
+        response = xmlrpc_handle_exception(error, code_as_int=False)
+    return Response(response=response, mimetype='text/xml')
 
-        This entrypoint is historical and non-compliant, but kept for
-        backwards-compatibility.
-        """
-        try:
-            response = self._xmlrpc(service)
-        except Exception as error:
-            response = xmlrpc_handle_exception_string(error)
-        return Response(response=response, mimetype='text/xml')
+@route("/xmlrpc/2/<service>", auth="none", methods=["POST"], csrf=False, save_session=False)
+def xmlrpc_2(self, service):
+    try:
+        response = self._xmlrpc(service)
+    except Exception as error:
+        response = xmlrpc_handle_exception(error, code_as_int=True)
+    return Response(response=response, mimetype='text/xml')
 
-    @route("/xmlrpc/2/<service>", auth="none", methods=["POST"], csrf=False, save_session=False)
-    def xmlrpc_2(self, service):
-        """XML-RPC service that returns faultCode as int."""
-        try:
-            response = self._xmlrpc(service)
-        except Exception as error:
-            response = xmlrpc_handle_exception_int(error)
-        return Response(response=response, mimetype='text/xml')
 
     @route('/jsonrpc', type='json', auth="none", save_session=False)
     def jsonrpc(self, service, method, args):
